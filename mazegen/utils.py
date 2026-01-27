@@ -4,12 +4,6 @@ def get_dynamic_sleep(index, base_delay):
     return max(0.005, float(base_delay) - (index * 0.001))
 
 
-def force_path(maze, points):
-    for x, y in points:
-        if 0 <= x < maze.width and 0 <= y < maze.height:
-            maze.grid[y][x] = 1
-
-
 def encode_cell_walls(maze, x, y):
     """Encode walls of a cell as hexadecimal.
 

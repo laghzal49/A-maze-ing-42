@@ -4,7 +4,7 @@ import shutil
 from mazegen.pathfinder import solve_maze
 from mazegen.maze_renderer import display_terminal, RED, BOLD, BLINK, RESET
 from mazegen.config_parser import parser
-from mazegen.utils import get_dynamic_sleep, force_path, save_maze_to_file
+from mazegen.utils import get_dynamic_sleep, save_maze_to_file
 from mazegen.maze_42_generator import generate_perfect_maze_with_42
 import random
 
@@ -60,14 +60,12 @@ def main() -> None:
                 print(RED + BLINK + "!! NO PATH FOUND !!" + RESET)
 
             menu = (
-                "Q: Quit | F: Force Path | P: Toggle Perfect | S: Toggle Seed\n"
-                "H: Toggle Path | 4: Toggle 42 | C: Change Wall Color | V: Save\n"
+                "Q: Quit | P: Toggle Perfect | S: Toggle Seed | H: Toggle Path\n"
+                "4: Toggle 42 | C: Change Wall Color | V: Save\n"
             )
             cmd = input(menu).strip()
             if cmd == 'q' or cmd == 'Q':
                 sys.exit(0)
-            if cmd == 'f' or cmd == 'F':
-                force_path(my_maze, path_found if path_found else [])
             if cmd == 'p' or cmd == 'P':
                 perfect = not perfect
             if cmd == 's' or cmd == 'S':

@@ -60,7 +60,7 @@ def display_terminal(maze: 'Maze', entrance: tuple, exit: tuple,
             elif (x, y) == exit:
                 print(BOLD + RED + " E" + RESET, end="")
             elif (x, y) in path_set:
-                print(RED + "██" + RESET, end="")
+                print(BOLD + RED + "··" + RESET, end="")
             elif highlight_42 and (x, y) in pattern_42:
                 if cell == 1:
                     print(YELLOW + "██" + RESET, end="")

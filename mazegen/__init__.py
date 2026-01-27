@@ -8,7 +8,6 @@ from mazegen.config_parser import parser
 from mazegen.utils import (
     encode_cell_walls,
     save_maze_to_file,
-    force_path,
     get_dynamic_sleep,
 )
 
@@ -20,6 +19,5 @@ __all__ = [
     "parser",
     "encode_cell_walls",
     "save_maze_to_file",
-    "force_path",
     "get_dynamic_sleep",
 ]
