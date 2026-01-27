@@ -1,0 +1,6 @@
+# Core dependencies (none required - uses standard library only)
+
+# Development dependencies
+flake8>=6.0.0
+mypy>=1.0.0
+pytest>=7.0.0
