@@ -48,6 +48,9 @@ def main() -> None:
                     display_terminal(my_maze, start_pt, end_pt,
                                      path_found[:i], highlight_42, wall_color)
                     time.sleep(get_dynamic_sleep(i, delay))
+                # Keep final path displayed
+                display_terminal(my_maze, start_pt, end_pt,
+                                 path_found, highlight_42, wall_color)
             elif path_found and not show_path:
                 display_terminal(my_maze, start_pt, end_pt,
                                  None, highlight_42, wall_color)
