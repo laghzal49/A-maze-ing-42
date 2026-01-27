@@ -1,6 +1,6 @@
 from collections import deque
-from maze_generator import Maze
-from pathfinder import solve_maze
+from mazegen.maze_generator import Maze
+from mazegen.pathfinder import solve_maze
 
 
 def has_multiple_paths(maze: Maze, start: tuple, end: tuple) -> bool:

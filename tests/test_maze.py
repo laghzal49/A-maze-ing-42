@@ -1,8 +1,8 @@
 import pytest
-from maze_generator import Maze
-from pathfinder import solve_maze
-from maze_validator import validate_entry_exit, has_3x3_open_areas
-from config_parser import parser
+from mazegen.maze_generator import Maze
+from mazegen.pathfinder import solve_maze
+from mazegen.maze_validator import validate_entry_exit, has_3x3_open_areas
+from mazegen.config_parser import parser
 
 
 class TestMazeGenerator:

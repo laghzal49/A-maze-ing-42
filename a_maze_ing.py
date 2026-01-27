@@ -1,11 +1,11 @@
 import time
 import sys
 import shutil
-from pathfinder import solve_maze
-from maze_renderer import display_terminal, RED, BOLD, BLINK, RESET
-from config_parser import parser
-from utils import get_dynamic_sleep, force_path, save_maze_to_file
-from maze_42_generator import generate_perfect_maze_with_42
+from mazegen.pathfinder import solve_maze
+from mazegen.maze_renderer import display_terminal, RED, BOLD, BLINK, RESET
+from mazegen.config_parser import parser
+from mazegen.utils import get_dynamic_sleep, force_path, save_maze_to_file
+from mazegen.maze_42_generator import generate_perfect_maze_with_42
 import random
 
 

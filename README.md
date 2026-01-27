@@ -14,7 +14,7 @@ The project generates mazes using the Recursive Backtracker algorithm, ensuring 
 
 ```bash
 git clone <your-repo-url>
-cd A-maze-ing
+cd A-maze-ing-42
 
 # Create virtual environment (recommended)
 python3 -m venv venv
@@ -152,21 +152,23 @@ Format structure:
 
 ```
 A-maze-ing/
-├── a_maze_ing.py            # Main entry point
-├── config_parser.py          # Configuration file parser
-├── maze_generator.py         # Core maze generation logic (REUSABLE)
-├── maze_42_generator.py      # "42" pattern integration
-├── maze_validator.py         # Maze validation functions
-├── pathfinder.py             # BFS pathfinding algorithm (REUSABLE)
-├── maze_renderer.py          # Terminal visualization
-├── utils.py                  # Utility functions (hex encoding, file I/O)
-├── config.txt                # Default configuration file
-├── Makefile                  # Build and run commands
-├── pyproject.toml            # Package configuration
-├── requirements.txt          # Dependencies
-├── test_maze.py              # Unit tests
-├── mazegen-1.0.0-py3-none-any.whl  # Distributable package
-└── README.md                 # This file
+├── mazegen/                   # Reusable package
+│   ├── __init__.py            # Package initialization
+│   ├── maze_generator.py      # Core maze generation logic (REUSABLE)
+│   ├── maze_42_generator.py   # "42" pattern integration
+│   ├── maze_validator.py      # Maze validation functions
+│   ├── pathfinder.py          # BFS pathfinding algorithm (REUSABLE)
+│   ├── maze_renderer.py       # Terminal visualization
+│   ├── utils.py               # Utility functions (hex encoding, file I/O)
+│   └── config_parser.py       # Configuration file parser
+├── tests/                     # Test suite
+│   └── test_maze.py           # Unit tests
+├── a_maze_ing.py              # Main entry point
+├── config.txt                 # Default configuration file
+├── Makefile                   # Build and run commands
+├── pyproject.toml             # Package configuration
+├── requirements.txt           # Dependencies
+└── README.md                  # This file
 ```
 
 ## Code Reusability
@@ -178,7 +180,7 @@ The following modules can be imported and used in other projects:
 #### 1. **maze_generator.py** - Core Maze Generation
 
 ```python
-from maze_generator import Maze
+from mazegen.maze_generator import Maze
 
 # Create a maze
 maze = Maze(width=21, height=21)
@@ -195,7 +197,7 @@ height = maze.height
 #### 2. **pathfinder.py** - BFS Pathfinding
 
 ```python
-from pathfinder import solve_maze
+from mazegen.pathfinder import solve_maze
 
 # Find shortest path
 path = solve_maze(maze, start=(1, 1), end=(19, 19))
@@ -205,7 +207,7 @@ path = solve_maze(maze, start=(1, 1), end=(19, 19))
 #### 3. **maze_validator.py** - Validation Functions
 
 ```python
-from maze_validator import (
+from mazegen.maze_validator import (
     has_multiple_paths,
     validate_entry_exit,
     has_3x3_open_areas
@@ -222,10 +224,10 @@ is_valid = validate_entry_exit(maze, entry, exit)
 
 ```bash
 # Install from the .whl file
-pip install mazegen-1.0.0-py3-none-any.whl
+pip install dist/a_maze_ing-1.0.0-py3-none-any.whl
 
 # Or build from source
-python3 -m build
+make build
 pip install dist/a_maze_ing-1.0.0-py3-none-any.whl
 ```
 
@@ -292,7 +294,7 @@ pip install dist/a_maze_ing-1.0.0-py3-none-any.whl
 
 ### AI Usage
 
-AI tools (GitHub Copilot, ChatGPT) were used for the following tasks:
+AI tools (ChatGPT) were used for the following tasks:
 
 1. **Code Generation Assistance**:
    - Boilerplate code for file I/O and error handling
@@ -311,8 +313,6 @@ AI tools (GitHub Copilot, ChatGPT) were used for the following tasks:
 
 4. **Algorithm Implementation**:
    - Initial recursive backtracker pseudocode
-   - BFS pathfinding structure
-   - Hexadecimal encoding logic
 
 **Important Note**: All AI-generated code was reviewed, tested, and modified to ensure correctness and understanding. The core algorithm design and project architecture were human-designed.
 

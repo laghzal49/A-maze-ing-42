@@ -35,10 +35,10 @@ a-maze-ing = "a_maze_ing:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["*.py"]
+include = ["mazegen*"]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false

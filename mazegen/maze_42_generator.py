@@ -1,6 +1,6 @@
 from typing import Optional
-from maze_generator import Maze
-from maze_validator import has_multiple_paths
+from mazegen.maze_generator import Maze
+from mazegen.maze_validator import has_multiple_paths
 
 
 def generate_perfect_maze_with_42(w: int, h: int, start_pt: tuple,

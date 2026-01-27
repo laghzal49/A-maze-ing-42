@@ -2,7 +2,7 @@ from typing import Optional, TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from maze_generator import Maze
+    from mazegen.maze_generator import Maze
 
 
 RESET = "\033[0m"
