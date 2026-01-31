@@ -1,23 +1,30 @@
-"""A-maze-ing: A maze generator with 42 pattern integration."""
+"""
+Mazegen package - Maze generation and solving with pygame visualization.
 
-from mazegen.maze_generator import Maze
-from mazegen.maze_42_generator import generate_perfect_maze_with_42
-from mazegen.pathfinder import solve_maze
-from mazegen.maze_renderer import display_terminal
-from mazegen.config_parser import parser
-from mazegen.utils import (
-    encode_cell_walls,
-    save_maze_to_file,
-    get_dynamic_sleep,
-)
+Modules:
+    - maze_generator: Core maze generation (DFS, Binary Tree)
+    - path_finder: A* pathfinding algorithm
+    - parser: Configuration file parsing
+    - forth_two: "42" pattern display
+    - render: Pygame interactive renderer
 
+Usage:
+    python3 -m mazegen          # CLI demo
+    python3 -m mazegen.render   # Interactive GUI
+"""
+
+__version__ = "2.0.0"
 __all__ = [
     "Maze",
-    "generate_perfect_maze_with_42",
-    "solve_maze",
-    "display_terminal",
-    "parser",
-    "encode_cell_walls",
-    "save_maze_to_file",
-    "get_dynamic_sleep",
+    "astar_find_path",
+    "bfs_find_path",
+    "path_to_moves",
+    "MazeConfig",
+    "parse_file",
+    "MazeRenderer",
 ]
+
+from .maze_generator import Maze
+from .path_finder import astar_find_path, bfs_find_path, path_to_moves
+from .parser import MazeConfig, parse_file
+from .render import MazeRenderer
