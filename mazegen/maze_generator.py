@@ -77,7 +77,7 @@ class Maze:
 
     def generate(self, entry_x: int, entry_y: int,
                  exit_x: Optional[int] = None, exit_y: Optional[int] = None,
-                 seed: Optional[int] = None, algo: str = "dfs") -> None:
+                 seed: Optional[int] = None, algo: str = "dfs", perfect: bool = True) -> None:
         """Generate maze using specified algorithm.
         Args:
             entry_x (int): Entry X coordinate
@@ -86,6 +86,8 @@ class Maze:
             exit_y (Optional[int]): Exit Y coordinate (default: height-1)
             seed (Optional[int]): Random seed for reproducibility
             algo (str): Algorithm to use ('dfs' or 'binary_tree')
+            perfect (bool): If True, generate perfect maze (single path).
+                           If False, add random walls to create loops.
         Raises:
             ValueError: If entry/exit is out of bounds or algo is unknown
         """
@@ -128,11 +130,46 @@ class Maze:
             self.walls[exit_y][exit_x] &= ~self.W  # Open West wall
         elif exit_x == self.width - 1:
             self.walls[exit_y][exit_x] &= ~self.E  # Open East wall
+        
+        # If not perfect maze, add random passages to create loops
+        if not perfect:
+            self._add_loops(rng)
 
         if exit_y == 0:
             self.walls[exit_y][exit_x] &= ~self.N  # Open North wall
         elif exit_y == self.height - 1:
             self.walls[exit_y][exit_x] &= ~self.S  # Open South wall
+
+    def _add_loops(self, rng: random.Random) -> None:
+        """Add random passages to create loops (non-perfect maze).
+        
+        Randomly opens walls between cells to create multiple paths,
+        making the maze non-perfect (has loops/redundant paths).
+        
+        Args:
+            rng (random.Random): Random number generator
+        """
+        # Add loops by randomly opening walls (about 15-20% of cells)
+        num_loops = max(2, (self.width * self.height) // 10)
+        
+        for _ in range(num_loops):
+            x = rng.randint(0, self.width - 1)
+            y = rng.randint(0, self.height - 1)
+            
+            # Try to open a random adjacent wall
+            directions = [(0, -1, self.N), (1, 0, self.E), 
+                         (0, 1, self.S), (-1, 0, self.W)]
+            rng.shuffle(directions)
+            
+            for dx, dy, wall_flag in directions:
+                nx, ny = x + dx, y + dy
+                if self.in_bounds(nx, ny):
+                    # Open the wall between cells
+                    self.walls[y][x] &= ~wall_flag
+                    opposite_wall = {self.N: self.S, self.E: self.W, 
+                                   self.S: self.N, self.W: self.E}[wall_flag]
+                    self.walls[ny][nx] &= ~opposite_wall
+                    break
 
     def _gen_dfs(
         self,
