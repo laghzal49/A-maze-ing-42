@@ -180,7 +180,7 @@ class MazeRenderer:
 
         pygame.display.flip()
 
-    def draw_status(self, algo_name: str, path_active: bool, mode: str = ""):
+    def draw_status(self, algo_name: str, path_active: bool, mode: str = "", is_perfect: bool = True):
         """Draw status bar at bottom."""
         status_y = self.screen_height - 40
 
@@ -188,8 +188,9 @@ class MazeRenderer:
             status_text = f">>> Click on maze to set {mode.upper()} <<<"
             color = self.entry_color if mode == "entry" else self.exit_color
         else:
+            perfect_label = "PERFECT" if is_perfect else "LOOPS"
             status_text = (
-                f"[R] Regen  [P] Path  [A] {algo_name}  "
+                f"[R] Regen  [P] Path  [A] {algo_name}  [M] {perfect_label}  "
                 f"[C] Wall Color  [F] 42 Color  [E] Entry  [X] Exit  [Q] Quit"
             )
             color = self.text_color
@@ -222,13 +223,16 @@ class MazeRenderer:
 
         seed = 42
         rng = random.Random(seed)
+        
+        # Perfect maze toggle (True = perfect, False = with loops)
+        is_perfect = True
 
         # Generate initial maze
         maze = Maze(self.maze_width, self.maze_height)
         maze.generate(
             entry[0], entry[1],
             exit_x=exit_pt[0], exit_y=exit_pt[1],
-            seed=seed, algo=algos[algo_idx])
+            seed=seed, algo=algos[algo_idx], perfect=is_perfect)
 
         # Calculate path first to avoid 42 conflicts
         path = bfs_find_path(maze, entry, exit_pt)
@@ -318,7 +322,25 @@ class MazeRenderer:
                         maze.generate(
                             entry[0], entry[1],
                             exit_x=exit_pt[0], exit_y=exit_pt[1],
-                            seed=seed, algo=algos[algo_idx])
+                            seed=seed, algo=algos[algo_idx], perfect=is_perfect)
+                        # Calculate path first to avoid 42 conflicts
+                        path = bfs_find_path(maze, entry, exit_pt)
+                        path_set = set(path) if path else set()
+                        path_set.add(entry)
+                        path_set.add(exit_pt)
+                        # Recalculate 42 pattern avoiding path
+                        fortytwo_start = find_42_location(maze, path_set)
+                        fortytwo_cells = get_42_pattern(
+                            fortytwo_start[0], fortytwo_start[1])
+                        show_path = False
+
+                    elif event.key == pygame.K_m:
+                        # Toggle between perfect and non-perfect mazes
+                        is_perfect = not is_perfect
+                        maze.generate(
+                            entry[0], entry[1],
+                            exit_x=exit_pt[0], exit_y=exit_pt[1],
+                            seed=seed, algo=algos[algo_idx], perfect=is_perfect)
                         # Calculate path first to avoid 42 conflicts
                         path = bfs_find_path(maze, entry, exit_pt)
                         path_set = set(path) if path else set()
@@ -335,7 +357,7 @@ class MazeRenderer:
                         maze.generate(
                             entry[0], entry[1],
                             exit_x=exit_pt[0], exit_y=exit_pt[1],
-                            seed=seed, algo=algos[algo_idx])
+                            seed=seed, algo=algos[algo_idx], perfect=is_perfect)
                         # Calculate path first to avoid 42 conflicts
                         path = bfs_find_path(maze, entry, exit_pt)
                         path_set = set(path) if path else set()
@@ -352,7 +374,7 @@ class MazeRenderer:
                 maze, entry, exit_pt,
                 path if show_path else None,
                 fortytwo_cells=fortytwo_cells)
-            self.draw_status(algos[algo_idx], show_path, setting_mode or "")
+            self.draw_status(algos[algo_idx], show_path, setting_mode or "", is_perfect)
 
             self.clock.tick(60)
 
