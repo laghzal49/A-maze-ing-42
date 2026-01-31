@@ -1,10 +1,13 @@
-.PHONY: install run debug clean lint lint-strict test build
+.PHONY: install run gui debug clean lint format lint-strict test build
 
 install:
 	pip install -r requirements.txt
 
 run:
 	python3 a_maze_ing.py config.txt
+
+gui:
+	python3 -m mazegen.render
 
 debug:
 	python3 -m pdb a_maze_ing.py config.txt
@@ -27,6 +30,12 @@ lint-strict:
 test:
 	pytest tests/
 
+format:
+	black .
+
+format-check:
+	black --check .
+
 build:
 	python3 -m build
-	@echo "\n✓ Build complete! Package available at: dist/a_maze_ing-1.0.0-py3-none-any.whl"
+	@echo "\n✓ Build complete! Package available at: dist/"
