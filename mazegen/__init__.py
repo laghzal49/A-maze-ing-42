@@ -22,9 +22,13 @@ __all__ = [
     "MazeConfig",
     "parse_file",
     "MazeRenderer",
+    "is_perfect_maze",
+    "validate_entry_exit",
+    "has_multiple_paths",
 ]
 
 from .maze_generator import Maze
 from .path_finder import astar_find_path, bfs_find_path, path_to_moves
 from .parser import MazeConfig, parse_file
 from .render import MazeRenderer
+from .maze_validator import is_perfect_maze, validate_entry_exit, has_multiple_paths
