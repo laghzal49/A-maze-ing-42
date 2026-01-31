@@ -25,6 +25,7 @@ Usage:
 # For backwards compatibility
 from .parser import MazeConfig
 
+
 def validate_maze_config(config_dict):
     """Validate maze configuration dictionary."""
     try:
@@ -42,5 +43,6 @@ def validate_maze_config(config_dict):
         return True
     except ValueError:
         return False
+
 
 __all__ = ["validate_maze_config", "MazeConfig"]
