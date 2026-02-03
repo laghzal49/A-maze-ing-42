@@ -12,4 +12,4 @@ PERFECT=True
 # Optional: Random seed for reproducible mazes
 # SEED=42
 # Optional: Animation delay in seconds
-# DELAY=0.05
+DELAY=0.05

@@ -1,34 +1,25 @@
-"""
-Mazegen package - Maze generation and solving with pygame visualization.
-
-Modules:
-    - maze_generator: Core maze generation (DFS, Binary Tree)
-    - path_finder: A* pathfinding algorithm
-    - parser: Configuration file parsing
-    - forth_two: "42" pattern display
-    - render: Pygame interactive renderer
-
-Usage:
-    python3 -m mazegen          # CLI demo
-    python3 -m mazegen.render   # Interactive GUI
-"""
-
-__version__ = "2.0.0"
-__all__ = [
-    "Maze",
-    "astar_find_path",
-    "bfs_find_path",
-    "path_to_moves",
-    "MazeConfig",
-    "parse_file",
-    "MazeRenderer",
-    "is_perfect_maze",
-    "validate_entry_exit",
-    "has_multiple_paths",
-]
+"""Maze generation and solving package."""
 
 from .maze_generator import Maze
-from .path_finder import astar_find_path, bfs_find_path, path_to_moves
-from .parser import MazeConfig, parse_file
-from .render import MazeRenderer
-from .maze_validator import is_perfect_maze, validate_entry_exit, has_multiple_paths
+from .maze_renderer import MazeRenderer
+from .path_finder import bfs_find_path, path_to_moves
+from .parser import parse_file, parse_dict, MazeConfig
+from .output_writer import write_output_file, maze_to_hex_rows
+from .curses_renderer import render_maze_curses
+from .ascii_renderer import render_maze
+from .position_selector import get_user_position
+
+__all__ = [
+    "Maze",
+    "MazeRenderer",
+    "bfs_find_path",
+    "path_to_moves",
+    "parse_file",
+    "parse_dict",
+    "MazeConfig",
+    "write_output_file",
+    "maze_to_hex_rows",
+    "render_maze_curses",
+    "render_maze",
+    "get_user_position",
+]

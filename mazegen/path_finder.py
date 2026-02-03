@@ -1,127 +1,69 @@
-from .maze_generator import Maze
+"""Breadth-First Search pathfinder and move sequence generator."""
+
+import queue
 from typing import List, Tuple, Optional
-import heapq
+
+from .maze_generator import Maze
 
 
-def astar_find_path(
-        maze: Maze, start: Tuple[int, int],
-        end: Tuple[int, int]) -> Optional[List[Tuple[int, int]]]:
-    """Find shortest path using A* algorithm (fastest & optimal).
-
-    A* uses Manhattan distance heuristic to guide search,
-    making it faster than BFS while guaranteeing shortest path.
-
-    Args:
-        maze: Maze object with wall bit-flags
-        start: Start coordinates (x, y)
-        end: End coordinates (x, y)
-
-    Returns:
-        List of (x, y) tuples representing shortest path, or None
-    """
-    # Validate bounds
-    if not (maze.in_bounds(start[0], start[1]) and
-            maze.in_bounds(end[0], end[1])):
+def bfs_find_path(
+    maze: Maze,
+    start: Tuple[int, int],
+    end: Tuple[int, int],
+) -> Optional[List[Tuple[int, int]]]:
+    """Find the shortest path avoiding blocked cells and walls."""
+    if not (maze.in_bounds(*start) and maze.in_bounds(*end)):
+        return None
+    if maze.is_blocked(*start) or maze.is_blocked(*end):
         return None
 
-    if start == end:
-        return [start]
+    visited = {start}
+    q = queue.Queue()
+    q.put((start, [start]))
 
-    # Direction mappings for wall checking
-    wall_map = {
-        (0, -1): (Maze.N, Maze.S),  # North
-        (1, 0): (Maze.E, Maze.W),   # East
-        (0, 1): (Maze.S, Maze.N),   # South
-        (-1, 0): (Maze.W, Maze.E)   # West
+    # Mapping relative movement to the wall bit that must be OPEN
+    w_map = {
+        (0, -1): 1,  # North (Maze.N)
+        (1, 0): 2,   # East (Maze.E)
+        (0, 1): 4,   # South (Maze.S)
+        (-1, 0): 8   # West (Maze.W)
     }
 
-    def heuristic(pos: Tuple[int, int]) -> int:
-        """Manhattan distance heuristic."""
-        return abs(pos[0] - end[0]) + abs(pos[1] - end[1])
+    while not q.empty():
+        (cx, cy), path = q.get()
+        if (cx, cy) == end:
+            return path
 
-    # A* setup: priority queue with (f_score, counter, position)
-    counter = 0
-    heap = [(heuristic(start), counter, start)]
-    counter += 1
-
-    visited = set()
-    parent = {start: None}
-    g_score = {start: 0}  # Cost from start to current
-
-    while heap:
-        _, _, current = heapq.heappop(heap)
-
-        if current in visited:
-            continue
-
-        visited.add(current)
-
-        # Found goal
-        if current == end:
-            path = []
-            while current:
-                path.append(current)
-                current = parent[current]
-            return path[::-1]
-
-        x, y = current
-        current_g = g_score[current]
-
-        # Check all 4 neighbors
-        for dx, dy in [(0, -1), (1, 0), (0, 1), (-1, 0)]:
-            nx, ny = x + dx, y + dy
-            neighbor = (nx, ny)
-
-            # Skip if out of bounds or visited
-            if not maze.in_bounds(nx, ny) or neighbor in visited:
-                continue
-
-            # Check if wall is open between cells
-            wall_from, wall_to = wall_map[(dx, dy)]
-            if (not (maze.walls[y][x] & wall_from) and
-                    not (maze.walls[ny][nx] & wall_to)):
-
-                tentative_g = current_g + 1
-
-                # Update if we found a better path
-                if neighbor not in g_score or tentative_g < g_score[neighbor]:
-                    g_score[neighbor] = tentative_g
-                    f_score = tentative_g + heuristic(neighbor)
-                    parent[neighbor] = current
-                    heapq.heappush(heap, (f_score, counter, neighbor))
-                    counter += 1
-
+        for (dx, dy), bit in w_map.items():
+            nx, ny = cx + dx, cy + dy
+            if maze.in_bounds(nx, ny) and not maze.is_blocked(nx, ny):
+                # Check if the wall bit is NOT set (meaning passage is open)
+                if not (maze.walls[cy][cx] & bit):
+                    if (nx, ny) not in visited:
+                        visited.add((nx, ny))
+                        q.put(((nx, ny), path + [(nx, ny)]))
     return None
 
 
-# Alias for backwards compatibility
-def bfs_find_path(
-        maze: Maze, start: Tuple[int, int],
-        end: Tuple[int, int]) -> Optional[List[Tuple[int, int]]]:
-    """Alias to A* - fastest pathfinding algorithm."""
-    return astar_find_path(maze, start, end)
-
-
 def path_to_moves(path: List[Tuple[int, int]]) -> str:
-    """Convert path coordinates to direction string (N/E/S/W).
-
-    Args:
-        path: List of (x, y) coordinates
-
-    Returns:
-        String of movement letters like "EESSWWN"
-    """
-    if len(path) < 2:
+    """Convert a list of coordinates into a N/E/S/W direction string."""
+    if not path or len(path) < 2:
         return ""
 
     moves = []
-    direction_map = {(0, -1): "N", (1, 0): "E", (0, 1): "S", (-1, 0): "W"}
+    # (dx, dy) mapping
+    dir_map = {
+        (0, -1): "N",
+        (1, 0): "E",
+        (0, 1): "S",
+        (-1, 0): "W"
+    }
 
     for i in range(len(path) - 1):
         x1, y1 = path[i]
         x2, y2 = path[i + 1]
-        dx, dy = x2 - x1, y2 - y1
-        if (dx, dy) in direction_map:
-            moves.append(direction_map[(dx, dy)])
+        move = dir_map.get((x2 - x1, y2 - y1))
+        if move:
+            moves.append(move)
 
     return "".join(moves)

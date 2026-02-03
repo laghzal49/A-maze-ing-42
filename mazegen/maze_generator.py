@@ -1,212 +1,294 @@
+"""Maze generation core."""
+
 import random
-from typing import Optional, Set, Tuple
+from typing import Optional, Set, Tuple, List
 
 
 class Maze:
-    """Represents a maze using wall bit-flags for each cell.
-    Each cell stores a byte encoding which walls are present:
-    - N (1): North wall
-    - E (2): East wall
-    - S (4): South wall
-    - W (8): West wall
-    Attributes:
-        width (int): Width of maze in cells
-        height (int): Height of maze in cells
-        walls (list): 2D array of wall configurations (bit-flags)
-    """
-    N = 1  # North wall flag
-    E = 2  # East wall flag
-    S = 4  # South wall flag
-    W = 8  # West wall flag
+    """Maze grid with wall bitmasks and 42 pattern support."""
 
-    def __init__(self, width: int, height: int):
-        """Initialize maze with given dimensions, all walls closed.
+    # Direction bitmasks
+    N, E, S, W = 1, 2, 4, 8
 
-        Args:
-            width (int): Width of the maze
-            height (int): Height of the maze
-        """
+    # "4" Digit relative coordinates
+    four_pattern = [
+        (0, 0), (0, 1), (0, 2), (0, 3), (1, 3), (2, 3),
+        (3, 3), (3, 4), (3, 5), (3, 6)
+    ]
+
+    # "2" Digit relative coordinates
+    two_pattern = [
+        (0, 0), (1, 0), (2, 0), (3, 0), (3, 1), (3, 2), (0, 3),
+        (1, 3), (2, 3), (3, 3), (0, 4), (0, 5), (0, 6), (1, 6),
+        (2, 6), (3, 6)
+    ]
+
+    def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
-        self._all_closed = self.N | self.E | self.S | self.W
-        self.walls = [[self._all_closed for _ in range(self.width)]
-                      for _ in range(self.height)]
-
-    def reset(self) -> None:
-        """Reset maze to all walls closed."""
-        self.walls = [[self._all_closed for _ in range(self.width)]
-                      for _ in range(self.height)]
+        self.walls: List[List[int]] = [
+            [15 for _ in range(width)] for _ in range(height)
+        ]
+        self.blocked_cells: Set[Tuple[int, int]] = set()
+        self.pattern_origin: Optional[Tuple[int, int]] = None
 
     def in_bounds(self, x: int, y: int) -> bool:
-        """Check if coordinates are within maze bounds.
-        Args:
-            x (int): X coordinate
-            y (int): Y coordinate
-        Returns:
-            bool: True if coordinates are valid
-        """
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def carve_between(self, x: int, y: int, nx: int, ny: int) -> bool:
-        """Carve a passage between two adjacent cells.
-        Args:
-            x (int): Current cell X
-            y (int): Current cell Y
-            nx (int): Next cell X
-            ny (int): Next cell Y
-        Returns:
-            bool: True if passage was carved, False if invalid
-        """
-        if not (self.in_bounds(x, y) and self.in_bounds(nx, ny)):
+    def is_blocked(self, x: int, y: int) -> bool:
+        return (x, y) in self.blocked_cells
+
+    def create_42_pattern(self) -> bool:
+        """Mark the '42' cells as blocked. Returns True if placed."""
+        self.blocked_cells.clear()
+        self.pattern_origin = None
+
+        max_four_x = max(dx for dx, _ in self.four_pattern)
+        max_four_y = max(dy for _, dy in self.four_pattern)
+        max_two_x = max(dx for dx, _ in self.two_pattern) + 5
+        max_two_y = max(dy for _, dy in self.two_pattern)
+
+        pattern_width = max(max_four_x, max_two_x) + 1
+        pattern_height = max(max_four_y, max_two_y) + 1
+
+        ox = self.width // 2 - pattern_width // 2
+        oy = self.height // 2 - pattern_height // 2
+
+        if (
+            ox < 0
+            or oy < 0
+            or ox + pattern_width > self.width
+            or oy + pattern_height > self.height
+        ):
             return False
 
-        dx, dy = nx - x, ny - y
-        mapping = {
-            (0, -1): (self.N, self.S),
-            (1, 0):  (self.E, self.W),
-            (0, 1):  (self.S, self.N),
-            (-1, 0): (self.W, self.E),
-        }
-        if (dx, dy) not in mapping:
-            return False
+        self.pattern_origin = (ox, oy)
 
-        w1, w2 = mapping[(dx, dy)]
-        self.walls[y][x] &= ~w1
-        self.walls[ny][nx] &= ~w2
+        # Add "4"
+        for dx, dy in self.four_pattern:
+            nx, ny = ox + dx, oy + dy
+            if self.in_bounds(nx, ny):
+                self.blocked_cells.add((nx, ny))
+
+        # Add "2" (shifted right)
+        for dx, dy in self.two_pattern:
+            nx, ny = ox + 5 + dx, oy + dy
+            if self.in_bounds(nx, ny):
+                self.blocked_cells.add((nx, ny))
+
+        # Force blocked cells to be fully closed
+        for x, y in self.blocked_cells:
+            self.walls[y][x] = 15
         return True
 
-    def generate(self, entry_x: int, entry_y: int,
-                 exit_x: Optional[int] = None, exit_y: Optional[int] = None,
-                 seed: Optional[int] = None, algo: str = "dfs", perfect: bool = True) -> None:
-        """Generate maze using specified algorithm.
-        Args:
-            entry_x (int): Entry X coordinate
-            entry_y (int): Entry Y coordinate
-            exit_x (Optional[int]): Exit X coordinate (default: width-1)
-            exit_y (Optional[int]): Exit Y coordinate (default: height-1)
-            seed (Optional[int]): Random seed for reproducibility
-            algo (str): Algorithm to use ('dfs' or 'binary_tree')
-            perfect (bool): If True, generate perfect maze (single path).
-                           If False, add random walls to create loops.
-        Raises:
-            ValueError: If entry/exit is out of bounds or algo is unknown
-        """
-        if not self.in_bounds(entry_x, entry_y):
-            raise ValueError("Entry is out of bounds")
-
-        # Set default exit if not provided
-        if exit_x is None:
-            exit_x = self.width - 1
-        if exit_y is None:
-            exit_y = self.height - 1
-
-        if not self.in_bounds(exit_x, exit_y):
-            raise ValueError("Exit is out of bounds")
-
-        self.reset()
-        rng = random.Random(seed)
-
-        if algo == "dfs":
-            visited: Set[Tuple[int, int]] = set()
-            self._gen_dfs(entry_x, entry_y, visited, rng)
-        elif algo == "binary_tree":
-            self.generate_binary_tree(rng)
-        else:
-            raise ValueError(f"Unknown algo: {algo}")
-
-        # Carve out entry point (open outer wall)
-        if entry_x == 0:
-            self.walls[entry_y][entry_x] &= ~self.W  # Open West wall
-        elif entry_x == self.width - 1:
-            self.walls[entry_y][entry_x] &= ~self.E  # Open East wall
-
-        if entry_y == 0:
-            self.walls[entry_y][entry_x] &= ~self.N  # Open North wall
-        elif entry_y == self.height - 1:
-            self.walls[entry_y][entry_x] &= ~self.S  # Open South wall
-
-        # Carve out exit point (open outer wall)
-        if exit_x == 0:
-            self.walls[exit_y][exit_x] &= ~self.W  # Open West wall
-        elif exit_x == self.width - 1:
-            self.walls[exit_y][exit_x] &= ~self.E  # Open East wall
-        
-        # If not perfect maze, add random passages to create loops
-        if not perfect:
-            self._add_loops(rng)
-
-        if exit_y == 0:
-            self.walls[exit_y][exit_x] &= ~self.N  # Open North wall
-        elif exit_y == self.height - 1:
-            self.walls[exit_y][exit_x] &= ~self.S  # Open South wall
-
-    def _add_loops(self, rng: random.Random) -> None:
-        """Add random passages to create loops (non-perfect maze).
-        
-        Randomly opens walls between cells to create multiple paths,
-        making the maze non-perfect (has loops/redundant paths).
-        
-        Args:
-            rng (random.Random): Random number generator
-        """
-        # Add loops by randomly opening walls (about 15-20% of cells)
-        num_loops = max(2, (self.width * self.height) // 10)
-        
-        for _ in range(num_loops):
-            x = rng.randint(0, self.width - 1)
-            y = rng.randint(0, self.height - 1)
-            
-            # Try to open a random adjacent wall
-            directions = [(0, -1, self.N), (1, 0, self.E), 
-                         (0, 1, self.S), (-1, 0, self.W)]
-            rng.shuffle(directions)
-            
-            for dx, dy, wall_flag in directions:
-                nx, ny = x + dx, y + dy
-                if self.in_bounds(nx, ny):
-                    # Open the wall between cells
-                    self.walls[y][x] &= ~wall_flag
-                    opposite_wall = {self.N: self.S, self.E: self.W, 
-                                   self.S: self.N, self.W: self.E}[wall_flag]
-                    self.walls[ny][nx] &= ~opposite_wall
-                    break
-
-    def _gen_dfs(
-        self,
-        x: int,
-        y: int,
-        visited: Set[Tuple[int, int]],
-        rng: random.Random
-    ) -> None:
-        """Generate maze using Depth-First Search algorithm.
-        Args:
-            x (int): Current X coordinate
-            y (int): Current Y coordinate
-            visited (Set): Set of visited cells
-            rng (random.Random): Random number generator
-        """
-        visited.add((x, y))
-        directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
-        rng.shuffle(directions)
-
-        for dx, dy in directions:
-            nx, ny = x + dx, y + dy
-            if self.in_bounds(nx, ny) and (nx, ny) not in visited:
-                self.carve_between(x, y, nx, ny)
-                self._gen_dfs(nx, ny, visited, rng)
-
-    def generate_binary_tree(self, rng: random.Random) -> None:
-        """Generate maze using Binary Tree algorithm.
-        Args:
-            rng (random.Random): Random number generator
-        """
+    def reset(self) -> None:
+        """Reset the grid (all closed)."""
         for y in range(self.height):
             for x in range(self.width):
-                neighbors = []
-                if self.in_bounds(x, y - 1):
-                    neighbors.append((x, y - 1))
-                if self.in_bounds(x + 1, y):
-                    neighbors.append((x + 1, y))
-                if neighbors:
-                    nx, ny = rng.choice(neighbors)
-                    self.carve_between(x, y, nx, ny)
+                self.walls[y][x] = 15
+        self.blocked_cells.clear()
+        self.pattern_origin = None
+
+    def generate_maze(
+        self,
+        seed: Optional[int] = None,
+        algo: str = "dfs",
+        perfect: bool = True,
+    ) -> None:
+        """Main entry: reset, lock the 42 pattern, then generate."""
+        rng = random.Random(seed)
+
+        self.reset()
+        self.create_42_pattern()
+
+        if perfect and algo == "binary_tree":
+            self._dfs_algo(rng)
+        elif algo == "binary_tree":
+            self._binary_tree_algo(rng)
+        elif algo == "prim":
+            self._prim_algo(rng)
+        else:
+            self._dfs_algo(rng)
+        self._ensure_connected(rng)
+
+    def generate(
+        self,
+        seed: Optional[int] = None,
+        algo: str = "dfs",
+        perfect: bool = True,
+    ) -> None:
+        """Compatibility wrapper for generate_maze."""
+        self.generate_maze(seed=seed, algo=algo, perfect=perfect)
+
+    def _dfs_algo(self, rng: random.Random) -> None:
+        """DFS recursive backtracker spanning all reachable cells."""
+        visited = [[False for _ in range(self.width)]
+                   for _ in range(self.height)]
+
+        for x, y in self.blocked_cells:
+            visited[y][x] = True
+
+        dirs = [
+            (0, -1, self.N, self.S),
+            (1, 0, self.E, self.W),
+            (0, 1, self.S, self.N),
+            (-1, 0, self.W, self.E),
+        ]
+
+        def dfs(cx: int, cy: int) -> None:
+            visited[cy][cx] = True
+            d = dirs[:]
+            rng.shuffle(d)
+
+            for dx, dy, w_bit, opp_bit in d:
+                nx, ny = cx + dx, cy + dy
+                if not self.in_bounds(nx, ny):
+                    continue
+                if visited[ny][nx]:
+                    continue
+                if self.is_blocked(nx, ny):
+                    continue
+
+                self.walls[cy][cx] &= ~w_bit
+                self.walls[ny][nx] &= ~opp_bit
+                dfs(nx, ny)
+
+        start = None
+        for y in range(self.height):
+            for x in range(self.width):
+                if not self.is_blocked(x, y):
+                    start = (x, y)
+                    break
+            if start:
+                break
+
+        if not start:
+            return
+
+        dfs(start[0], start[1])
+
+    def _binary_tree_algo(self, rng: random.Random) -> None:
+        """Binary tree carving that never touches blocked cells."""
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.is_blocked(x, y):
+                    continue
+
+                choices = []
+                # East
+                if self.in_bounds(x + 1, y) and not self.is_blocked(x + 1, y):
+                    choices.append((1, 0, self.E, self.W))
+                # South
+                if self.in_bounds(x, y + 1) and not self.is_blocked(x, y + 1):
+                    choices.append((0, 1, self.S, self.N))
+
+                if not choices:
+                    continue
+
+                dx, dy, w_bit, opp_bit = rng.choice(choices)
+                self.walls[y][x] &= ~w_bit
+                self.walls[y + dy][x + dx] &= ~opp_bit
+
+    def _prim_algo(self, rng: random.Random) -> None:
+        """Randomized Prim's algorithm for perfect mazes."""
+        visited: Set[Tuple[int, int]] = set(self.blocked_cells)
+
+        start = None
+        for y in range(self.height):
+            for x in range(self.width):
+                if not self.is_blocked(x, y):
+                    start = (x, y)
+                    break
+            if start:
+                break
+
+        if not start:
+            return
+
+        visited.add(start)
+        frontier: List[Tuple[int, int, int, int, int, int]] = []
+
+        def add_frontier(cx: int, cy: int) -> None:
+            for dx, dy, w_bit, opp_bit in [
+                (0, -1, self.N, self.S),
+                (1, 0, self.E, self.W),
+                (0, 1, self.S, self.N),
+                (-1, 0, self.W, self.E),
+            ]:
+                nx, ny = cx + dx, cy + dy
+                if not self.in_bounds(nx, ny):
+                    continue
+                if self.is_blocked(nx, ny):
+                    continue
+                if (nx, ny) in visited:
+                    continue
+                frontier.append((cx, cy, nx, ny, w_bit, opp_bit))
+
+        add_frontier(start[0], start[1])
+
+        while frontier:
+            idx = rng.randrange(len(frontier))
+            cx, cy, nx, ny, w_bit, opp_bit = frontier.pop(idx)
+            if (nx, ny) in visited:
+                continue
+            self.walls[cy][cx] &= ~w_bit
+            self.walls[ny][nx] &= ~opp_bit
+            visited.add((nx, ny))
+            add_frontier(nx, ny)
+
+    def _ensure_connected(self, rng: random.Random) -> None:
+        """Connect all non-blocked cells into a single component."""
+        total_cells = []
+        for y in range(self.height):
+            for x in range(self.width):
+                if not self.is_blocked(x, y):
+                    total_cells.append((x, y))
+
+        if not total_cells:
+            return
+
+        def idx(x: int, y: int) -> int:
+            return y * self.width + x
+
+        parent = list(range(self.width * self.height))
+        rank = [0] * (self.width * self.height)
+
+        def find(a: int) -> int:
+            while parent[a] != a:
+                parent[a] = parent[parent[a]]
+                a = parent[a]
+            return a
+
+        def union(a: int, b: int) -> None:
+            ra, rb = find(a), find(b)
+            if ra == rb:
+                return
+            if rank[ra] < rank[rb]:
+                parent[ra] = rb
+            elif rank[ra] > rank[rb]:
+                parent[rb] = ra
+            else:
+                parent[rb] = ra
+                rank[ra] += 1
+
+        edges = []
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.is_blocked(x, y):
+                    continue
+                if self.in_bounds(x + 1, y) and not self.is_blocked(x + 1, y):
+                    edges.append((x, y, x + 1, y, self.E, self.W))
+                    if not (self.walls[y][x] & self.E):
+                        union(idx(x, y), idx(x + 1, y))
+                if self.in_bounds(x, y + 1) and not self.is_blocked(x, y + 1):
+                    edges.append((x, y, x, y + 1, self.S, self.N))
+                    if not (self.walls[y][x] & self.S):
+                        union(idx(x, y), idx(x, y + 1))
+
+        rng.shuffle(edges)
+        for x, y, nx, ny, w_bit, opp_bit in edges:
+            if find(idx(x, y)) == find(idx(nx, ny)):
+                continue
+            self.walls[y][x] &= ~w_bit
+            self.walls[ny][nx] &= ~opp_bit
+            union(idx(x, y), idx(nx, ny))

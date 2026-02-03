@@ -7,7 +7,7 @@ run:
 	python3 a_maze_ing.py config.txt
 
 gui:
-	python3 -m mazegen.render
+	python3 a_maze_ing.py config.txt
 
 debug:
 	python3 -m pdb a_maze_ing.py config.txt
@@ -21,7 +21,8 @@ clean:
 
 lint:
 	flake8 .
-	mypy . --check-untyped-defs --exclude tests
+	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
+		--disallow-untyped-defs --check-untyped-defs --exclude tests
 
 lint-strict:
 	flake8 .
@@ -38,4 +39,6 @@ format-check:
 
 build:
 	python3 -m build
-	@echo "\n✓ Build complete! Package available at: dist/"
+	@cp -f dist/mazegen-*.whl . 2>/dev/null || true
+	@cp -f dist/mazegen-*.tar.gz . 2>/dev/null || true
+	@echo "\n✓ Build complete! Package available at: dist/ (copied to repo root)"
