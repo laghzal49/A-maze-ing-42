@@ -1,7 +1,7 @@
 """Breadth-First Search pathfinder and move sequence generator."""
 
-import queue
-from typing import List, Tuple, Optional
+from collections import deque
+from typing import Deque, List, Tuple, Optional
 
 from .maze_generator import Maze
 
@@ -18,8 +18,8 @@ def bfs_find_path(
         return None
 
     visited = {start}
-    q = queue.Queue()
-    q.put((start, [start]))
+    q: Deque[Tuple[Tuple[int, int], List[Tuple[int, int]]]] = deque()
+    q.append((start, [start]))
 
     # Mapping relative movement to the wall bit that must be OPEN
     w_map = {
@@ -29,8 +29,8 @@ def bfs_find_path(
         (-1, 0): 8   # West (Maze.W)
     }
 
-    while not q.empty():
-        (cx, cy), path = q.get()
+    while q:
+        (cx, cy), path = q.popleft()
         if (cx, cy) == end:
             return path
 
@@ -41,7 +41,7 @@ def bfs_find_path(
                 if not (maze.walls[cy][cx] & bit):
                     if (nx, ny) not in visited:
                         visited.add((nx, ny))
-                        q.put(((nx, ny), path + [(nx, ny)]))
+                        q.append(((nx, ny), path + [(nx, ny)]))
     return None
 
 

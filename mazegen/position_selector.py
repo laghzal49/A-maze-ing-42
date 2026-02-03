@@ -32,7 +32,7 @@ def get_user_position(
 
         key = stdscr.getch()
         if key in [10, 13, curses.KEY_ENTER] and is_legal:
-            return tuple(pos)
+            return (pos[0], pos[1])
 
         if key in [curses.KEY_UP, ord('w')] and pos[1] > 0:
             pos[1] -= 1
