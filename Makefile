@@ -1,4 +1,4 @@
-.PHONY: install run debug clean lint
+.PHONY: install run debug clean lint build
 
 install:
 	pip install -r requirements.txt
@@ -20,3 +20,7 @@ lint:
 	flake8 .
 	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
 		--disallow-untyped-defs --check-untyped-defs --exclude tests
+
+build:
+	python3 -m pip install --upgrade build
+	python3 -m build
