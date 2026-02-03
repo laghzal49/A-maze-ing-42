@@ -1,4 +1,5 @@
 import curses
+import random
 from typing import List, Optional, Set, Tuple
 
 from .maze_generator import Maze
@@ -217,6 +218,7 @@ def render_maze_curses(
     color_wall = 4
     current_algo = algo
     current_perfect = perfect
+    current_seed = seed
 
     status_msg = ""
     start, end = setup_phase(stdscr, maze, start, end)
@@ -266,12 +268,11 @@ def render_maze_curses(
 
         path_status = "ON" if show_path else "OFF"
         perfect_status = "ON" if current_perfect else "OFF"
-        algo_note = " (imperfect)" if current_algo == "binary_tree" else ""
         try:
             instructions = [
                 f"Arrows/WASD=move | P=path({path_status}) | R=reset | "
-                f"N=new pos | A=algo({current_algo}{algo_note}) | "
-                f"T=perfect({perfect_status}) | S=save | C=42color |"
+                f"N=new pos | A=algo({current_algo}) | "
+                f"T=perfect({perfect_status}) | G=new seed | S=save | C=42color |"
                 f" V=wallcolor | Q=quit",
                 f"Pos: ({player_pos[0]}, {player_pos[1]}) | "
                 f"Goal: ({end[0]}, {end[1]})"
@@ -292,10 +293,8 @@ def render_maze_curses(
         if key in [ord('p'), ord('P')]:
             show_path = not show_path
         elif key in [ord('r'), ord('R')]:
-            if current_perfect and current_algo == "binary_tree":
-                current_perfect = False
             maze.generate_maze(
-                seed=seed, algo=current_algo, perfect=current_perfect
+                seed=current_seed, algo=current_algo, perfect=current_perfect
             )
             try:
                 path = bfs_find_path(maze, start, end)
@@ -319,16 +318,9 @@ def render_maze_curses(
                 path_found = False
             status_msg = "Entry/exit updated."
         elif key in [ord('a'), ord('A')]:
-            if current_algo == "dfs":
-                current_algo = "binary_tree"
-            elif current_algo == "binary_tree":
-                current_algo = "prim"
-            else:
-                current_algo = "dfs"
-            if current_perfect and current_algo == "binary_tree":
-                current_perfect = False
+            current_algo = "prim" if current_algo == "dfs" else "dfs"
             maze.generate_maze(
-                seed=seed, algo=current_algo, perfect=current_perfect
+                seed=current_seed, algo=current_algo, perfect=current_perfect
             )
             try:
                 path = bfs_find_path(maze, start, end)
@@ -340,10 +332,8 @@ def render_maze_curses(
             status_msg = f"Algorithm set to {current_algo}."
         elif key in [ord('t'), ord('T')]:
             current_perfect = not current_perfect
-            if current_perfect and current_algo == "binary_tree":
-                current_perfect = False
             maze.generate_maze(
-                seed=seed, algo=current_algo, perfect=current_perfect
+                seed=current_seed, algo=current_algo, perfect=current_perfect
             )
             try:
                 path = bfs_find_path(maze, start, end)
@@ -371,3 +361,16 @@ def render_maze_curses(
 
         if player_pos == [end[0], end[1]] and path_found:
             show_path = True
+        elif key in [ord('g'), ord('G')]:
+            current_seed = random.randint(0, 2**31 - 1)
+            maze.generate_maze(
+                seed=current_seed, algo=current_algo, perfect=current_perfect
+            )
+            try:
+                path = bfs_find_path(maze, start, end)
+                path_set = set(path) if path else set()
+                path_found = bool(path)
+            except (ValueError, Exception):
+                path_set = set()
+                path_found = False
+            status_msg = f"Seed updated: {current_seed}."

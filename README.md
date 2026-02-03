@@ -41,7 +41,7 @@ PERFECT=True
 Optional keys:
 ```
 SEED=42
-ALGO=dfs        # dfs, binary_tree, or prim
+ALGO=dfs        # dfs or prim
 DELAY=0.05
 ```
 
@@ -54,7 +54,6 @@ DELAY=0.05
 ## Maze Generation Algorithms
 - **DFS (Recursive Backtracker)** — default for perfect mazes.
 - **Prim's Algorithm** — alternative perfect maze (set `ALGO=prim`).
-- **Binary Tree** — fast but imperfect; only allowed when `PERFECT=False`.
 
 ### Why these algorithms?
 - DFS is simple, fast, and guarantees a perfect maze by construction.
@@ -79,7 +78,8 @@ The terminal UI supports:
 - Show/Hide the shortest path
 - Change wall colors
 - Adjust entry/exit positions
-- Toggle perfect maze mode (binary tree is always imperfect)
+- Toggle perfect maze mode
+- Change seed (new randomized maze)
 - Save the current maze to the output file
 
 ## Reusable Module

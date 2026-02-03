@@ -5,11 +5,15 @@
 - Added Prim's algorithm (`ALGO=prim`) for perfect maze generation.
 - Added perfect mode toggle in curses UI (`T` key).
 - Added save key in curses UI (`S`) to write current maze to the output file.
+- Added seed change key in curses UI (`G`) to regenerate with a new random seed.
 - Added hex output writer module.
 
 ### Changed
 - Config parser now enforces required keys (`OUTPUT_FILE`, `PERFECT`).
 - Binary Tree is treated as imperfect; perfect mode forces DFS.
+ 
+### Removed
+- Removed Binary Tree algorithm support.
 - README aligned with subject requirements.
 - Updated Makefile lint flags and Python version requirement (3.10+).
 

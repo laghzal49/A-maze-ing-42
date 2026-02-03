@@ -62,8 +62,8 @@ def _validate_config(config: Dict[str, Any]) -> MazeConfig:
         raise ValueError("PERFECT is required")
 
     algo = config.get("algo", "dfs")
-    if algo not in {"dfs", "binary_tree", "prim"}:
-        raise ValueError("ALGO must be 'dfs', 'binary_tree', or 'prim'")
+    if algo not in {"dfs", "prim"}:
+        raise ValueError("ALGO must be 'dfs' or 'prim'")
 
     seed = config.get("seed")
     delay = config.get("delay")

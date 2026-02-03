@@ -19,7 +19,7 @@ def test_maze_generation() -> None:
     maze.generate_maze(seed=42, algo="dfs", perfect=True)
     assert maze.walls[0][0] is not None
 
-    maze.generate_maze(seed=42, algo="binary_tree", perfect=False)
+    maze.generate_maze(seed=42, algo="prim", perfect=True)
     assert maze.walls[0][0] is not None
 
 

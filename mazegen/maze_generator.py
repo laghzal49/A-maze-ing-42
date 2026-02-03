@@ -101,11 +101,7 @@ class Maze:
         self.reset()
         self.create_42_pattern()
 
-        if perfect and algo == "binary_tree":
-            self._dfs_algo(rng)
-        elif algo == "binary_tree":
-            self._binary_tree_algo(rng)
-        elif algo == "prim":
+        if algo == "prim":
             self._prim_algo(rng)
         else:
             self._dfs_algo(rng)
@@ -166,28 +162,6 @@ class Maze:
             return
 
         dfs(start[0], start[1])
-
-    def _binary_tree_algo(self: "Maze", rng: random.Random) -> None:
-        """Binary tree carving that never touches blocked cells."""
-        for y in range(self.height):
-            for x in range(self.width):
-                if self.is_blocked(x, y):
-                    continue
-
-                choices = []
-                # East
-                if self.in_bounds(x + 1, y) and not self.is_blocked(x + 1, y):
-                    choices.append((1, 0, self.E, self.W))
-                # South
-                if self.in_bounds(x, y + 1) and not self.is_blocked(x, y + 1):
-                    choices.append((0, 1, self.S, self.N))
-
-                if not choices:
-                    continue
-
-                dx, dy, w_bit, opp_bit = rng.choice(choices)
-                self.walls[y][x] &= ~w_bit
-                self.walls[y + dy][x + dx] &= ~opp_bit
 
     def _prim_algo(self: "Maze", rng: random.Random) -> None:
         """Randomized Prim's algorithm for perfect mazes."""
