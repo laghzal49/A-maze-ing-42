@@ -272,7 +272,8 @@ def render_maze_curses(
             instructions = [
                 f"Arrows/WASD=move | P=path({path_status}) | R=reset | "
                 f"N=new pos | A=algo({current_algo}) | "
-                f"T=perfect({perfect_status}) | G=new seed | S=save | C=42color |"
+                f"T=perfect({perfect_status}) | "
+                f"G=new seed | S=save | C=42color |"
                 f" V=wallcolor | Q=quit",
                 f"Pos: ({player_pos[0]}, {player_pos[1]}) | "
                 f"Goal: ({end[0]}, {end[1]})"
@@ -362,7 +363,13 @@ def render_maze_curses(
         if player_pos == [end[0], end[1]] and path_found:
             show_path = True
         elif key in [ord('g'), ord('G')]:
-            current_seed = random.randint(0, 2**31 - 1)
+            new_seed = random.randint(0, 2**31 - 1)
+            if current_seed is None:
+                current_seed = new_seed
+            else:
+                while new_seed == current_seed:
+                    new_seed = random.randint(0, 2**31 - 1)
+                current_seed = new_seed
             maze.generate_maze(
                 seed=current_seed, algo=current_algo, perfect=current_perfect
             )
