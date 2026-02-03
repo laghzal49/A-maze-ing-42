@@ -11,7 +11,7 @@ class MazeRenderer:
     """Terminal renderer with curses support."""
 
     def __init__(
-        self,
+        self: "MazeRenderer",
         width: int,
         height: int,
         cell_size: int = 25,
@@ -32,14 +32,14 @@ class MazeRenderer:
         self.perfect = perfect
         self.use_curses = use_curses
 
-    def _build_maze(self) -> Maze:
+    def _build_maze(self: "MazeRenderer") -> Maze:
         """Build a maze instance."""
         maze = Maze(self.width, self.height)
         maze.generate_maze(seed=self.seed, algo=self.algo,
                            perfect=self.perfect)
         return maze
 
-    def run(self) -> None:
+    def run(self: "MazeRenderer") -> None:
         """Run the maze renderer."""
         maze = self._build_maze()
         start = self.entry

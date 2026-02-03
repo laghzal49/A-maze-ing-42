@@ -23,7 +23,7 @@ class Maze:
         (2, 6), (3, 6)
     ]
 
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self: "Maze", width: int, height: int) -> None:
         self.width = width
         self.height = height
         self.walls: List[List[int]] = [
@@ -32,13 +32,13 @@ class Maze:
         self.blocked_cells: Set[Tuple[int, int]] = set()
         self.pattern_origin: Optional[Tuple[int, int]] = None
 
-    def in_bounds(self, x: int, y: int) -> bool:
+    def in_bounds(self: "Maze", x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def is_blocked(self, x: int, y: int) -> bool:
+    def is_blocked(self: "Maze", x: int, y: int) -> bool:
         return (x, y) in self.blocked_cells
 
-    def create_42_pattern(self) -> bool:
+    def create_42_pattern(self: "Maze") -> bool:
         """Mark the '42' cells as blocked. Returns True if placed."""
         self.blocked_cells.clear()
         self.pattern_origin = None
@@ -81,7 +81,7 @@ class Maze:
             self.walls[y][x] = 15
         return True
 
-    def reset(self) -> None:
+    def reset(self: "Maze") -> None:
         """Reset the grid (all closed)."""
         for y in range(self.height):
             for x in range(self.width):
@@ -90,7 +90,7 @@ class Maze:
         self.pattern_origin = None
 
     def generate_maze(
-        self,
+        self: "Maze",
         seed: Optional[int] = None,
         algo: str = "dfs",
         perfect: bool = True,
@@ -112,7 +112,7 @@ class Maze:
         self._ensure_connected(rng)
 
     def generate(
-        self,
+        self: "Maze",
         seed: Optional[int] = None,
         algo: str = "dfs",
         perfect: bool = True,
@@ -120,7 +120,7 @@ class Maze:
         """Compatibility wrapper for generate_maze."""
         self.generate_maze(seed=seed, algo=algo, perfect=perfect)
 
-    def _dfs_algo(self, rng: random.Random) -> None:
+    def _dfs_algo(self: "Maze", rng: random.Random) -> None:
         """DFS recursive backtracker spanning all reachable cells."""
         visited = [[False for _ in range(self.width)]
                    for _ in range(self.height)]
@@ -167,7 +167,7 @@ class Maze:
 
         dfs(start[0], start[1])
 
-    def _binary_tree_algo(self, rng: random.Random) -> None:
+    def _binary_tree_algo(self: "Maze", rng: random.Random) -> None:
         """Binary tree carving that never touches blocked cells."""
         for y in range(self.height):
             for x in range(self.width):
@@ -189,7 +189,7 @@ class Maze:
                 self.walls[y][x] &= ~w_bit
                 self.walls[y + dy][x + dx] &= ~opp_bit
 
-    def _prim_algo(self, rng: random.Random) -> None:
+    def _prim_algo(self: "Maze", rng: random.Random) -> None:
         """Randomized Prim's algorithm for perfect mazes."""
         visited: Set[Tuple[int, int]] = set(self.blocked_cells)
 
@@ -236,7 +236,7 @@ class Maze:
             visited.add((nx, ny))
             add_frontier(nx, ny)
 
-    def _ensure_connected(self, rng: random.Random) -> None:
+    def _ensure_connected(self: "Maze", rng: random.Random) -> None:
         """Connect all non-blocked cells into a single component."""
         total_cells = []
         for y in range(self.height):
