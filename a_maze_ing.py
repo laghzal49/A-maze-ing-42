@@ -51,7 +51,6 @@ def main() -> None:
         curses.wrapper(
             render_maze_curses,
             maze,
-            None,
             config.entry,
             config.exit,
             config.algo,

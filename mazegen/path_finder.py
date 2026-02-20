@@ -6,42 +6,68 @@ from typing import Deque, List, Tuple, Optional
 from .maze_generator import Maze
 
 
+def _is_wall_between(maze: Maze, x: int, y: int, dx: int, dy: int) -> bool:
+    """Return True if there is a wall between (x, y) and (x+dx, y+dy)."""
+    nx, ny = x + dx, y + dy
+    if not maze.in_bounds(nx, ny):
+        return True
+    if maze.is_blocked(x, y) or maze.is_blocked(nx, ny):
+        return True
+
+    cell = maze.walls[y][x]
+    if dx == 0 and dy == -1:
+        return bool(cell & maze.N)
+    if dx == 1 and dy == 0:
+        return bool(cell & maze.E)
+    if dx == 0 and dy == 1:
+        return bool(cell & maze.S)
+    if dx == -1 and dy == 0:
+        return bool(cell & maze.W)
+    return True
+
+
 def bfs_find_path(
     maze: Maze,
     start: Tuple[int, int],
     end: Tuple[int, int],
 ) -> Optional[List[Tuple[int, int]]]:
     """Find the shortest path avoiding blocked cells and walls."""
-    if not (maze.in_bounds(*start) and maze.in_bounds(*end)):
+
+    xs, ys = start
+    xe, ye = end
+
+    if not maze.in_bounds(xe, ye) or maze.is_blocked(xe, ye):
         return None
-    if maze.is_blocked(*start) or maze.is_blocked(*end):
+    if not maze.in_bounds(xs, ys) or maze.is_blocked(xs, ys):
         return None
 
+    d: Deque[Tuple[int, int, List[Tuple[int, int]]]] = deque()
+    d.append((xs, ys, [start]))
     visited = {start}
-    q: Deque[Tuple[Tuple[int, int], List[Tuple[int, int]]]] = deque()
-    q.append((start, [start]))
 
-    # Mapping relative movement to the wall bit that must be OPEN
-    w_map = {
-        (0, -1): 1,  # North (Maze.N)
-        (1, 0): 2,   # East (Maze.E)
-        (0, 1): 4,   # South (Maze.S)
-        (-1, 0): 8   # West (Maze.W)
-    }
+    directions = [
+        (0, -1),
+        (1, 0),
+        (0, 1),
+        (-1, 0),
+    ]
 
-    while q:
-        (cx, cy), path = q.popleft()
-        if (cx, cy) == end:
+    while d:
+        x, y, path = d.popleft()
+        if (x, y) == end:
             return path
 
-        for (dx, dy), bit in w_map.items():
-            nx, ny = cx + dx, cy + dy
-            if maze.in_bounds(nx, ny) and not maze.is_blocked(nx, ny):
-                # Check if the wall bit is NOT set (meaning passage is open)
-                if not (maze.walls[cy][cx] & bit):
-                    if (nx, ny) not in visited:
-                        visited.add((nx, ny))
-                        q.append(((nx, ny), path + [(nx, ny)]))
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            if (
+                maze.in_bounds(nx, ny)
+                and not maze.is_blocked(nx, ny)
+                and (nx, ny) not in visited
+                and not _is_wall_between(maze, x, y, dx, dy)
+            ):
+                visited.add((nx, ny))
+                d.append((nx, ny, path + [(nx, ny)]))
+
     return None
 
 
@@ -51,12 +77,11 @@ def path_to_moves(path: List[Tuple[int, int]]) -> str:
         return ""
 
     moves = []
-    # (dx, dy) mapping
     dir_map = {
         (0, -1): "N",
         (1, 0): "E",
         (0, 1): "S",
-        (-1, 0): "W"
+        (-1, 0): "W",
     }
 
     for i in range(len(path) - 1):

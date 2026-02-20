@@ -15,7 +15,6 @@ class MazeConfig:
     perfect: bool
     seed: Optional[int] = None
     algo: str = "dfs"
-    delay: Optional[float] = None
 
 
 def _parse_bool(value: str) -> bool:
@@ -42,42 +41,57 @@ def _validate_config(config: Dict[str, Any]) -> MazeConfig:
     if width <= 0 or height <= 0:
         raise ValueError("WIDTH and HEIGHT must be positive")
 
-    if entry is None or exit_pos is None:
-        raise ValueError("ENTRY and EXIT are required")
-    if not (isinstance(entry, tuple) and isinstance(exit_pos, tuple)):
-        raise ValueError("ENTRY and EXIT must be in x,y format")
-    if entry == exit_pos:
+    def _validate_point(name: str, p: Any) -> Tuple[int, int]:
+        if p is None:
+            raise ValueError(f"{name} is required")
+        if not isinstance(p, tuple) or len(p) != 2:
+            raise ValueError(f"{name} must be in x,y format")
+        x, y = p
+        if not isinstance(x, int) or not isinstance(y, int):
+            raise ValueError(f"{name} coordinates must be integers")
+        return x, y
+
+    ex, ey = _validate_point("ENTRY", entry)
+    xx, xy = _validate_point("EXIT", exit_pos)
+
+    if (ex, ey) == (xx, xy):
         raise ValueError("ENTRY and EXIT must be different")
-    if not (0 <= entry[0] < width and 0 <= entry[1] < height):
+    if not (0 <= ex < width and 0 <= ey < height):
         raise ValueError("ENTRY is out of bounds")
-    if not (0 <= exit_pos[0] < width and 0 <= exit_pos[1] < height):
+    if not (0 <= xx < width and 0 <= xy < height):
         raise ValueError("EXIT is out of bounds")
 
-    if output_file is None or not isinstance(output_file, str):
+    if output_file is None:
         raise ValueError("OUTPUT_FILE is required")
-    if not output_file.strip():
+    if not isinstance(output_file, str) or not output_file.strip():
         raise ValueError("OUTPUT_FILE must be a non-empty filename")
 
-    if perfect is None or not isinstance(perfect, bool):
+    if perfect is None:
         raise ValueError("PERFECT is required")
+    if not isinstance(perfect, bool):
+        raise ValueError("PERFECT must be True or False")
 
     algo = config.get("algo", "dfs")
-    if algo not in {"dfs", "prim"}:
-        raise ValueError("ALGO must be 'dfs' or 'prim'")
+    # Accept algorithm names case-insensitively for convenience.
+    if not isinstance(algo, str):
+        raise ValueError("ALGO must be a string")
+    algo_l = algo.lower()
+    if algo_l not in {"dfs", "prim", "hunt"}:
+        raise ValueError("ALGO must be 'dfs', 'prim', or 'hunt'")
+    algo = algo_l
 
     seed = config.get("seed")
-    delay = config.get("delay")
-
+    if seed is not None and not isinstance(seed, int):
+        raise ValueError("SEED must be an integer")
     return MazeConfig(
         width=width,
         height=height,
-        entry=entry,
-        exit=exit_pos,
+        entry=(ex, ey),
+        exit=(xx, xy),
         output_file=output_file,
         perfect=perfect,
         seed=seed,
         algo=algo,
-        delay=delay,
     )
 
 
@@ -109,6 +123,22 @@ def parse_file(filepath: str) -> MazeConfig:
     """
     config: Dict[str, Any] = {}
 
+    def set_once(name: str, val: Any, line_num: int) -> None:
+        if name in config:
+            raise ValueError(
+                f"Line {line_num}: Duplicate key '{name.upper()}'")
+        config[name] = val
+
+    try:
+        with open(filepath, "r") as f:
+            for line_num, line in enumerate(f, 1):
+                pass
+    except UnicodeDecodeError as e:
+        raise ValueError(
+            "Could not read config file due to encoding error: " + str(e)
+        )
+
+    # Re-open and parse; the preliminary read ensured decoding succeeds.
     with open(filepath, "r") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
@@ -126,29 +156,29 @@ def parse_file(filepath: str) -> MazeConfig:
 
             try:
                 if key == "WIDTH":
-                    config["width"] = int(value)
+                    set_once("width", int(value), line_num)
                 elif key == "HEIGHT":
-                    config["height"] = int(value)
+                    set_once("height", int(value), line_num)
                 elif key == "ENTRY":
                     coords = tuple(map(int, value.split(",")))
                     if len(coords) != 2:
                         raise ValueError("Must have exactly 2 coordinates")
-                    config["entry"] = coords
+                    set_once("entry", coords, line_num)
                 elif key == "EXIT":
                     coords = tuple(map(int, value.split(",")))
                     if len(coords) != 2:
                         raise ValueError("Must have exactly 2 coordinates")
-                    config["exit"] = coords
+                    set_once("exit", coords, line_num)
                 elif key == "OUTPUT_FILE":
-                    config["output_file"] = value
+                    set_once("output_file", value, line_num)
                 elif key == "PERFECT":
-                    config["perfect"] = _parse_bool(value)
+                    set_once("perfect", _parse_bool(value), line_num)
                 elif key == "SEED":
-                    config["seed"] = int(value)
-                elif key == "DELAY":
-                    config["delay"] = float(value)
+                    set_once("seed", int(value), line_num)
                 elif key == "ALGO":
-                    config["algo"] = value.lower()
+                    set_once("algo", value.lower(), line_num)
+                else:
+                    raise ValueError(f"Unknown key '{key}'")
             except ValueError as e:
                 raise ValueError(f"Line {line_num}: {e}")
 

@@ -10,10 +10,8 @@
 
 ### Changed
 - Config parser now enforces required keys (`OUTPUT_FILE`, `PERFECT`).
-- Binary Tree is treated as imperfect; perfect mode forces DFS.
  
 ### Removed
-- Removed Binary Tree algorithm support.
 - README aligned with subject requirements.
 - Updated Makefile lint flags and Python version requirement (3.10+).
 

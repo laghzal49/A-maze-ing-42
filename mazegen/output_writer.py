@@ -33,7 +33,7 @@ def write_output_file(
     lines.append(f"{exit_pos[0]},{exit_pos[1]}")
     lines.append(moves)
 
-    with open(output_file, "w", encoding="utf-8") as f:
+    with open(output_file, "w") as f:
         f.write("\n".join(lines))
         f.write("\n")
 

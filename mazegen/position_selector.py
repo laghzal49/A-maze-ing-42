@@ -4,6 +4,7 @@ import curses
 from typing import Set, Tuple
 
 from .maze_generator import Maze
+from .utils import safe_addstr
 
 
 def get_user_position(
@@ -21,24 +22,44 @@ def get_user_position(
         stdscr.clear()
         max_y, max_x = stdscr.getmaxyx()
 
-        stdscr.addstr(0, 0, prompt, curses.color_pair(2) | curses.A_BOLD)
-        stdscr.addstr(1, 0, "Use WASD/Arrows. ENTER to confirm.",
-                      curses.color_pair(4))
+        safe_addstr(
+            stdscr,
+            0,
+            0,
+            prompt,
+            curses.color_pair(2) | curses.A_BOLD,
+            max_x,
+        )
+        safe_addstr(
+            stdscr,
+            1,
+            0,
+            "Use Arrows. ENTER to confirm.",
+            curses.color_pair(4),
+            max_x,
+        )
 
         is_legal = tuple(pos) not in blocked
         color = curses.color_pair(1) if is_legal else curses.color_pair(5)
         status = " [VALID]" if is_legal else " [BLOCKED!]"
-        stdscr.addstr(2, 0, f"Current: {pos}{status}", color)
+        safe_addstr(
+            stdscr,
+            2,
+            0,
+            f"Current: {pos}{status}",
+            color,
+            max_x,
+        )
 
         key = stdscr.getch()
         if key in [10, 13, curses.KEY_ENTER] and is_legal:
             return (pos[0], pos[1])
 
-        if key in [curses.KEY_UP, ord('w')] and pos[1] > 0:
+        if key in [curses.KEY_UP] and pos[1] > 0:
             pos[1] -= 1
-        elif key in [curses.KEY_DOWN, ord('s')] and pos[1] < maze.height - 1:
+        elif key in [curses.KEY_DOWN] and pos[1] < maze.height - 1:
             pos[1] += 1
-        elif key in [curses.KEY_LEFT, ord('a')] and pos[0] > 0:
+        elif key in [curses.KEY_LEFT] and pos[0] > 0:
             pos[0] -= 1
-        elif key in [curses.KEY_RIGHT, ord('d')] and pos[0] < maze.width - 1:
+        elif key in [curses.KEY_RIGHT] and pos[0] < maze.width - 1:
             pos[0] += 1

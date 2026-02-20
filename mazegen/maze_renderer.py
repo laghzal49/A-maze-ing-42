@@ -60,7 +60,6 @@ class MazeRenderer:
                 curses.wrapper(
                     render_maze_curses,
                     maze,
-                    path,
                     start,
                     end,
                     self.algo,
